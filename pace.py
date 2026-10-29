@@ -159,7 +159,7 @@ def player_rows(ps):
     return "".join(out)
 
 
-def render(data, nav):
+def render(data):
     pos_order = list(data["teams"][0]["positions"])
     head = "".join(f'<th colspan="3" class="grp">{p}</th>' for p in pos_order)
     sub = "".join('<th class="num">Spelade</th><th class="num">Före pace</th><th class="num">Möjlig</th>'
@@ -186,13 +186,13 @@ def render(data, nav):
   <dl>
     <dt>Spelade enligt fantasy</dt><dd>{int(x["used"])}</dd>
     <dt>Borde ha kvar</dt><dd>{int(x["should_have_left"])}</dd>
-    <dt>Startarnas lag har spelat</dt><dd>{x["starters_played"]}</dd>
-    <dt>Kvar att spela (startare)</dt><dd>{x["starters_left"]}</dd>
+    <dt>Starters lag har spelat</dt><dd>{x["starters_played"]}</dd>
+    <dt>Kvar att spela (starters)</dt><dd>{x["starters_left"]}</dd>
     <dt>Före pace</dt><dd class="{cls(-x["ahead"])}">{fmt(x["ahead"])}</dd>
     <dt>Bänken kvar</dt><dd>{x["bench_left"]}</dd>
     <dt>Möjlig</dt><dd class="{cls(x["possible"])}">{fmt(x["possible"])}</dd>
   </dl>
-  <table class="mini"><thead><tr><th>Startare</th><th>Lag</th><th class="num">Sp</th><th class="num">Kvar</th></tr></thead>
+  <table class="mini"><thead><tr><th>Starters</th><th>Lag</th><th class="num">Sp</th><th class="num">Kvar</th></tr></thead>
   <tbody>{player_rows(x["starters"])}</tbody></table>
   <table class="mini"><thead><tr><th>Bänk</th><th>Lag</th><th class="num">Sp</th><th class="num">Kvar</th></tr></thead>
   <tbody>{player_rows(x["bench"])}</tbody></table>
@@ -220,13 +220,11 @@ dl{{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:0 0 10px}} d
 .mini td,.mini th{{padding:3px 4px;font-size:12px}} .mini{{margin-top:6px}}
 .inj{{color:var(--inj);font-size:11px;font-weight:600}}
 .legend{{margin:12px 0 16px;color:var(--muted);font-size:13px}}
-nav{{margin-bottom:16px;font-size:13px}} nav a{{margin-right:12px}} nav b{{margin-right:12px}}
 </style></head><body>
-<nav>{nav}</nav>
 <h1>{html.escape(data["league"])} – pace</h1>
 <p class="muted">Uppdaterad {data["generated"].replace("T", " ")} · {data["pro"]}-lagen har i snitt spelat {data["avg_played"]:.1f} av {data["season_len"]} matcher ({pct:.0f} % av säsongen)</p>
-<p class="legend"><b>Före pace</b> = kvarvarande matcher för nuvarande startare − (gräns − spelade).
-<span class="neg">Positivt</span>: startarna slår i taket så många matcher för tidigt. <span class="pos">Negativt</span>: så många matcher blir över även om alla startare spelar resten.
+<p class="legend"><b>Före pace</b> = kvarvarande matcher för nuvarande starters − (gräns − spelade).
+<span class="neg">Positivt</span>: starters slår i taket så många matcher för tidigt. <span class="pos">Negativt</span>: så många matcher blir över även om alla starters spelar resten.
 <b>Möjlig</b> = bänkens kvarvarande matcher + före pace; negativt betyder att bänken inte räcker för att täcka upp.</p>
 <div class="wrap"><table><thead><tr><th></th><th>Lag</th><th class="num">Poäng</th>{head}</tr>
 <tr><th></th><th></th><th></th>{sub}</tr></thead><tbody>{"".join(rows)}</tbody></table></div>
@@ -243,13 +241,9 @@ def main():
             print(f"FEL {key}: {e}", file=sys.stderr)
             failed.append(key)
             continue
-        nav = " ".join(
-            f'<b>{other["pro"]}</b>' if k == key else
-            f'<a href="{"../" * bool(lg["path"])}{other["path"] + "/" if other["path"] else ""}">{other["pro"]}</a>'
-            for k, other in LEAGUES.items())
         out = OUT / lg["path"]
         out.mkdir(parents=True, exist_ok=True)
-        (out / "index.html").write_text(render(data, nav))
+        (out / "index.html").write_text(render(data))
         (out / "data.json").write_text(json.dumps(data, ensure_ascii=False, indent=1))
         HISTORY.mkdir(exist_ok=True)
         (HISTORY / f"{dt.date.today()}-{key}.json").write_text(json.dumps(data, ensure_ascii=False))
