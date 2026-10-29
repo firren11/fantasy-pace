@@ -100,10 +100,17 @@ def build(lg):
                 "injury": p.get("injuryStatus") if p.get("injured") or p.get("injuryStatus") not in (None, "ACTIVE") else None,
             })
         positions = {}
+        filled_in = set()
         for label, (limit_slot, starter_slots, bench_slot) in lg["positions"].items():
             starters = [p for p in players if p["slot"] in starter_slots]
-            bench = [p for p in players if p["slot"] == lg["bench"]
+            bench = [p for p in players if p["slot"] == lg["bench"] and id(p) not in filled_in
                      and (bench_slot is None or bench_slot in p["eligible"])]
+            # Tomma startplatser fylls med bänkspelare i rosterordning
+            missing = max(0, sum(counts.get(s, 0) for s in starter_slots) - len(starters))
+            for p in bench[:missing]:
+                filled_in.add(id(p))
+                starters.append({**p, "fill": True})
+            bench = bench[missing:]
             limit = limits.get(limit_slot, 0)
             gp = used.get(t["id"], {}).get(limit_slot, 0)
             left_starters = sum(p["left"] for p in starters)
@@ -145,6 +152,8 @@ def player_rows(ps):
     for p in sorted(ps, key=lambda p: -p["left"]):
         label = {"INJURY_RESERVE": "IR", "DAY_TO_DAY": "DTD"}.get(p["injury"], p["injury"])
         inj = f' <span class="inj">{html.escape(label)}</span>' if p["injury"] else ""
+        if p.get("fill"):
+            inj += ' <span class="muted">(från bänk)</span>'
         out.append(f'<tr><td>{html.escape(p["name"])}{inj}</td><td>{p["team"]}</td>'
                    f'<td class="num">{p["played"]}</td><td class="num">{p["left"]}</td></tr>')
     return "".join(out)
