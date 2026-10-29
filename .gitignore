@@ -4,3 +4,4 @@ output/
 history/
 pace.log
 __pycache__/
+config_fba.json

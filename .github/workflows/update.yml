@@ -30,6 +30,8 @@ jobs:
         env:
           ESPN_S2: ${{ secrets.ESPN_S2 }}
           SWID: ${{ secrets.SWID }}
+          ESPN_S2_FBA: ${{ secrets.ESPN_S2_FBA }}
+          SWID_FBA: ${{ secrets.SWID_FBA }}
           TZ: Europe/Stockholm
       - uses: actions/upload-pages-artifact@v3
         with:
